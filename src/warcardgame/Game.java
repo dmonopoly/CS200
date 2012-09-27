@@ -15,6 +15,11 @@ import static warcardgame.GameState.SHOULD_TEST_WAR;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import javax.swing.JLabel;
@@ -30,46 +35,67 @@ public class Game extends JPanel {
         p1ActiveCards = new ArrayList<Card>();
         p2ActiveCards = new ArrayList<Card>();
         gameState = SHOULD_PLAY_CARDS;
-        announcement = new JLabel();
+        numCards = 26; // default, should be re-set later
         
-        // Prepare decks for players
-        Deck deck1 = new Deck();
-        deck1.shuffle();
-        Deck deck2 = new Deck(deck1.split());
-        
-        // testing
-        // deck1.removeCards(0, deck1.size());
-        
-        // deck1.add(new Card("3s"));
-        // deck1.add(new Card("5s"));
-        // deck1.add(new Card("6h"));
-        // deck1.add(new Card("js"));
-        // deck1.add(new Card("as"));
-        
-        // deck1.add(new Card("js"));
-        
-        
-        // deck2.removeCards(0, deck2.size());
-        
-        // deck2.add(new Card("4s"));
-        // deck2.add(new Card("5d"));
-        // deck2.add(new Card("6s"));
-        // deck2.add(new Card("jh"));
-        // deck2.add(new Card("ah"));
-        
-        // deck2.add(new Card("td"));
-
-        // System.out.println("Deck 1:");
-        // deck1.printCards();
-        // System.out.println("\nDeck 2:");
-        // deck2.printCards();
-
-        // The players!
-        player1 = new Player(deck1);
-        player2 = new Player(deck2);
+        /** IO */
         setupPanels();
     }
+
+    public void readData() {
+        try {
+            fis = new FileInputStream(SAVE_FILE_NAME);
+            ois = new ObjectInputStream(fis);
+            
+            // Read here
+
+            ois.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     
+    public void writeData() {
+        try {
+            fos = new FileOutputStream(SAVE_FILE_NAME);
+            oos = new ObjectOutputStream(fos);
+
+            // Write here
+            
+            oos.close();
+        } catch (Exception e) {
+            System.out.println("blahhh no game.sav file.. but shouldn't that be fine? it should just create it then.");
+        }
+    }
+
+    public void initializeDecksAndPlayers() {
+//    	setupPanels();
+    	
+        // Prepare decks for players
+        Deck deck1 = new Deck(numCards);
+        deck1.shuffle();
+        Deck deck2 = new Deck(deck1.split());
+
+        // The players!
+        player1 = new Player("player 1", deck1);
+        player2 = new Player("player 2", deck2);
+
+        /** Fill in inner panels */
+        // Stuff in the outer panel, surrounding the arena
+        p2Label = new JLabel("Player 2 card count: "+player2.cardCount());
+        
+        northNorthPanel.add(p2Label);
+        northSouthPanel.add(new Card("b")); // Back of card to represent deck
+        
+        p1Label = new JLabel("Player 1 card count: "+player1.cardCount());
+        
+        southNorthPanel.add(new Card("b")); // Back of card to represent deck
+        southSouthPanel.add(p1Label, BorderLayout.SOUTH);
+    }
+
+    public void setNumCards(int theNumberOfCards) {
+        numCards = theNumberOfCards;
+    }
+
     // KEY method: Continues the game, like drawing the next card
     // 2 states: show cards & clear cards
     public void step() {
@@ -84,7 +110,7 @@ public class Game extends JPanel {
 	    		if (p1Value == p2Value) {
 	    			// WAR!
                     // System.out.println("War mode turned on");
-	    			announcement.setText(warString);
+	    			announcement.setText(WAR_STRING);
 	    			gameState = SHOULD_PLAY_WAR_FACE_DOWN;
 	    		} else {
 	    			gameState = SHOULD_CLEAR_CARDS;
@@ -154,10 +180,13 @@ public class Game extends JPanel {
     	p2Label.setText("Player 2 card count: "+player2.cardCount());
     	p1Label.setText("Player 1 card count: "+player1.cardCount());
     	
-    	centerNorthPanel.updateUI();
-    	centerSouthPanel.updateUI();
-    	p2Label.updateUI();
-    	p1Label.updateUI();
+
+    	centerNorthPanel.revalidate();
+    	centerCenterPanel.revalidate();
+    	centerSouthPanel.revalidate();
+    	announcement.revalidate();
+    	revalidate();
+    	this.updateUI();
     	
         // System.out.println("updated");
     }
@@ -335,7 +364,7 @@ public class Game extends JPanel {
 	        northNorthPanel = new JPanel(new FlowLayout()); // p2 stats
 	        northSouthPanel = new JPanel(new FlowLayout()); // p2 deck
 	        southNorthPanel = new JPanel(new FlowLayout()); // p1 deck
-	        southSouthPanel = new JPanel(new FlowLayout()); // p1 stats
+	        southSouthPanel = new JPanel(new FlowLayout());
 
         // Combines panels with panels
         centerPanel.add(centerNorthPanel, BorderLayout.NORTH);
@@ -351,42 +380,40 @@ public class Game extends JPanel {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
         mainPanel.add(southPanel, BorderLayout.SOUTH);
         
-        /** Fill in inner panels */
-        // Stuff in the outer panel, surrounding the arena
-        p2Label = new JLabel("Player 2 card count: "+player2.cardCount());
-        
-        northNorthPanel.add(p2Label);
-        northSouthPanel.add(new Card("b")); // Back of card to represent deck
-        
-        p1Label = new JLabel("Player 1 card count: "+player1.cardCount());
-        
-        southNorthPanel.add(new Card("b")); // Back of card to represent deck
-        southSouthPanel.add(p1Label, BorderLayout.SOUTH);
+        // Arena stuff is all in centerNorthPanel and centerSouthPanel
         
         // The announcement label!
+        announcement = new JLabel();
         centerCenterPanel.add(announcement, BorderLayout.CENTER);
-        
-        // Arena stuff is all in centerNorthPanel and centerSouthPanel
+        setLayout(new BorderLayout(0, 0));
         
         this.add(mainPanel);
     }
     
-    /* Instance fields */
+    /** Instance fields */
+    private int numCards;
     private Player player1, player2; // you are player1, computer is player2
     private ArrayList<Card> p1ActiveCards;
     private ArrayList<Card> p2ActiveCards;
-    private GameState gameState; // to keep track of what type of step() to perform
+    private GameState gameState; 
+        // to keep track of what type of step() to perform
     
+    // IO
+    private FileInputStream fis;
+    private FileOutputStream fos;
+    private ObjectOutputStream oos;
+    private ObjectInputStream ois;
+
     // For stats
-    private JLabel p2Label;
-    private JLabel p1Label;
     private JLabel announcement; // e.g., "War!"
+    private JLabel p2Label, p1Label;
     
     private JPanel northPanel, centerPanel, southPanel;
     private JPanel centerNorthPanel, centerSouthPanel, centerCenterPanel;
     private JPanel northNorthPanel, northSouthPanel, southNorthPanel, southSouthPanel;
     
-    private static final String warString = "<html><b><span style='font-size: 30px'>WAR</span></b></html>";
-    
+    private static final String WAR_STRING = "<html><b><span style='font-size: 30px'>WAR</span></b></html>";
+    private static final String SAVE_FILE_NAME = "game.sav";
+
     private static final long serialVersionUID = 1L;
 }

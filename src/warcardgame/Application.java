@@ -49,31 +49,35 @@ public class Application extends JFrame implements ActionListener {
         
         // Main area
         mainAreaPanel = new JPanel();
+        mainAreaPanel.setLayout(new CardLayout());
         
         // First card panel: newGamePanel - i.e., a panel within the mainAreaPanel cardLayout
-        newGamePanel = new JPanel();
-        mainAreaPanel.add(newGamePanel, "newGamePanel");
+        firstPanel = new JPanel();
+        mainAreaPanel.add(firstPanel, FIRST_PANEL);
         
         btnNewGame = new JButton("New game");
         btnNewGame.addActionListener(this);
         
-        newGamePanel.add(btnNewGame);
+        firstPanel.add(btnNewGame);
+        
+        btnManagePlayers = new JButton("Manage players");
+        firstPanel.add(btnManagePlayers);
         
         // Second card panel: setupPanel
         setupPanel = new JPanel();
-        mainAreaPanel.add(setupPanel, "setupPanel");
+        mainAreaPanel.add(setupPanel, "SETUP_PANEL");
         setupPanel.setLayout(new BoxLayout(setupPanel, BoxLayout.PAGE_AXIS));
         
         setNumCardsPanel = new JPanel();
         setupPanel.add(setNumCardsPanel);
         
-        lblSetNumCards = new JLabel("Number of cards per player: ");
+        lblSetNumCards = new JLabel("Number of cards to be used: ");
         setNumCardsPanel.add(lblSetNumCards);
         
-        String[] comboOptions = { "1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26" };
+        String[] comboOptions = { "2","4","6","8","10","12","14","16","18","20","22","24","26" };
         
         comboBoxNumCards = new JComboBox(comboOptions);
-        comboBoxNumCards.setSelectedIndex(25);
+        comboBoxNumCards.setSelectedIndex(12);
         setNumCardsPanel.add(comboBoxNumCards);
         
         startPanel = new JPanel();
@@ -85,10 +89,9 @@ public class Application extends JFrame implements ActionListener {
         
         // Third card panel: gamePanel
         gamePanel = new Game();
-        mainAreaPanel.add(gamePanel, "gamePanel");
+        mainAreaPanel.add(gamePanel, GAME_PANEL);
 
         // Card layout prep
-        mainAreaPanel.setLayout(new CardLayout());
         ultimatePanel.add(mainAreaPanel, BorderLayout.CENTER);
         layout = (CardLayout)(mainAreaPanel.getLayout());
         layout.show(mainAreaPanel, "newGamePanel");
@@ -113,18 +116,23 @@ public class Application extends JFrame implements ActionListener {
     		if (e.getSource() == btnNewGame) {
     			menuState = GAME_SETUP;
     			layout.next(mainAreaPanel); // to setupPanel
-    			break;
+    			
+    		} else if (e.getSource() == btnManagePlayers) {
+    			// HERE
     		}
+    		break;
     	case GAME_SETUP:
     		if (e.getSource() == btnStart) {
     			menuState = GAME_RUNNING;
     			layout.next(mainAreaPanel); // to gamePanel
-    			break;
+                startGame(); // initialize other members of Game class
     		}
+    		break;
     	case GAME_RUNNING:
 //            if (e.getSource() == ) {
 //                
 //            }
+    		break;
     	}
     }
     
@@ -156,24 +164,12 @@ public class Application extends JFrame implements ActionListener {
 		public void mouseReleased(MouseEvent arg0) {
 		}
     }
-    
-//    private class MyKeyListener implements KeyListener {
-//        public void keyPressed(KeyEvent e) {
-//            if (menuState == GAME_RUNNING) {
-//            	System.out.println("keystroke detected in game running");
-//                switch (e.getKeyCode()) {
-//                    case KeyEvent.VK_SPACE:
-//                        System.out.println("space bar hit");
-//                        gamePanel.step();
-//                        break;
-//                }
-//            }
-//        }
-//        
-//        public void keyTyped(KeyEvent e) { }
-//        public void keyReleased(KeyEvent e) { }
-//        
-//    }
+
+    private void startGame() {
+        int numCards = Integer.parseInt((String) comboBoxNumCards.getSelectedItem()); // guaranteed to pass b/c of combo box
+        gamePanel.setNumCards(numCards);
+        gamePanel.initializeDecksAndPlayers();
+    }    
     
     /* Instance fields */
     private MenuState menuState;
@@ -184,7 +180,7 @@ public class Application extends JFrame implements ActionListener {
     private JPanel ultimatePanel;
     private Game gamePanel; // essential
     private CardLayout layout; // used with mainAreaPanel
-    private JPanel mainAreaPanel, newGamePanel, setupPanel; 
+    private JPanel mainAreaPanel, firstPanel, setupPanel; 
     
     // Components
     private JButton btnNewGame;
@@ -193,6 +189,10 @@ public class Application extends JFrame implements ActionListener {
     private JComboBox comboBoxNumCards;
     private JPanel startPanel;
     private JButton btnStart;
+    private JButton btnManagePlayers;
     
-    
+    // CardLayout panel keys
+    private static final String FIRST_PANEL = "FIRST_PANEL";
+    private static final String SETUP_PANEL = "SETUP_PANEL";
+    private static final String GAME_PANEL = "GAME_PANEL";
 }

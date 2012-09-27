@@ -1,18 +1,25 @@
 package warcardgame;
 
+import java.io.Serializable;
+
 /**
  *
  * @author David Zhang
  */
-public class Player {
-	public Player(Deck theDeck) {
+public class Player implements Serializable {
+	public Player(String theName, Deck theDeck) {
+		name = theName;
 		deck = theDeck;
 	}
-	private Player() {};
 	
 	public Card playCard() {
+		
 		deck.setFaceUpForCard(deck.size()-1, true); // make it faceUp
-		return deck.pop();
+		Card c = deck.pop();
+		
+		System.out.println(c.getValue() + "|" + name);
+		
+		return c;
 	}
 	
 	public void addCardToDeckBottom(Card c) {
@@ -34,4 +41,5 @@ public class Player {
     /* Instance fields */
 	private Deck deck;
 	private String name;
+	private int numWins, numLosses;
 }

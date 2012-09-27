@@ -1,6 +1,7 @@
 package warcardgame;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -8,13 +9,14 @@ import java.util.Random;
  * @author David Zhang
  */
 public class Deck {
-    public Deck() {
-    	cards = new ArrayList<Card>();
-    	fillUpDeck();
-    }
-    
     public Deck(ArrayList<Card> theCards) {
     	cards = theCards;
+    }
+
+    // @param numCards - the number of cards in this deck
+    public Deck(int numCards) {
+        cards = new ArrayList<Card>();
+        fillUpDeck(numCards);
     }
     
     // Removes half of this deck and returns the removed half; used when dividing the deck into 2
@@ -81,19 +83,36 @@ public class Deck {
     
     /** Private methods */
     // Used in constructor to fill up the deck
-    private void fillUpDeck() {
-    	// Go through each possible card
-    	String[] suits = { "c","d","h","s" };
-    	String[] type = { "2","3","4","5","6","7","8","9","t","j","q","k","a" };
-    	ArrayList<String> cardKeys = new ArrayList<String>();
-    	for (int i=0; i<suits.length; i++)
-    	   for (int j=0; j<type.length; j++)
-    	       cardKeys.add(type[j] + suits[i]);
+    private void fillUpDeck(int numCards) {
+        // Go through each possible card
+        String[] suits = { "c","d","h","s" };
+        String[] type = { "2","3","4","5","6","7","8","9","t","j","q","k","a" };
+        ArrayList<String> cardKeys = new ArrayList<String>();
+        for (int i=0; i<suits.length; i++)
+           for (int j=0; j<type.length; j++)
+               cardKeys.add(type[j] + suits[i]);
+        
+        Collections.shuffle(cardKeys);
+
+        for (int i=0; i < numCards; i++) {
+            cards.add(new Card(cardKeys.get(i)));
+        }
+    }    
+
+    // Used in constructor to fill up the deck
+    // private void fillUpDeck() {
+    // 	// Go through each possible card
+    // 	String[] suits = { "c","d","h","s" };
+    // 	String[] type = { "2","3","4","5","6","7","8","9","t","j","q","k","a" };
+    // 	ArrayList<String> cardKeys = new ArrayList<String>();
+    // 	for (int i=0; i<suits.length; i++)
+    // 	   for (int j=0; j<type.length; j++)
+    // 	       cardKeys.add(type[j] + suits[i]);
     	
-    	for (int i=0; i < cardKeys.size(); i++) {
-    		cards.add(new Card(cardKeys.get(i)));
-    	}
-    }
+    // 	for (int i=0; i < cardKeys.size(); i++) {
+    // 		cards.add(new Card(cardKeys.get(i)));
+    // 	}
+    // }
     
     // Tester method
     public static void main(String[] args) {
