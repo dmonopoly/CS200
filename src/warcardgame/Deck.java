@@ -19,6 +19,9 @@ public class Deck {
         fillUpDeck(numCards);
     }
     
+    public Deck() {
+    }
+    
     // Removes half of this deck and returns the removed half; used when dividing the deck into 2
     public ArrayList<Card> split() {
     	int size = size(); // save static size

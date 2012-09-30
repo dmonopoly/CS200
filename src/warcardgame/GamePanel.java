@@ -15,13 +15,12 @@ import static warcardgame.GameState.SHOULD_TEST_WAR;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -30,43 +29,32 @@ import javax.swing.JPanel;
  * and progressing wars.
  * @author David Zhang
  */
-public class Game extends JPanel {
-	public Game() {
+public class GamePanel extends JPanel implements ActionListener{
+	public GamePanel(String playerName, ActionListener theListener) {
+		listener = theListener;
         p1ActiveCards = new ArrayList<Card>();
         p2ActiveCards = new ArrayList<Card>();
         gameState = SHOULD_PLAY_CARDS;
-        numCards = 26; // default, should be re-set later
-        
-        /** IO */
+        numCards = 26;
+        player1Name = playerName;
+
         setupPanels();
     }
 
-    public void readData() {
-        try {
-            fis = new FileInputStream(SAVE_FILE_NAME);
-            ois = new ObjectInputStream(fis);
-            
-            // Read here
-
-            ois.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void actionPerformed(ActionEvent e) {
+    	System.out.println("GamePanel actionPerformed");
+        if (e.getSource() == btnExitGame) {
+        	resetGame();
+            System.out.println("should be firing exit game now");
+        	// passes to Application to change menuState
+        	listener.actionPerformed(new ActionEvent((Object) btnExitGame, ActionEvent.ACTION_PERFORMED, "Exit game"));
         }
+    }
+
+    public void setPlayerName(String s) {
+    	player1Name = s;
     }
     
-    public void writeData() {
-        try {
-            fos = new FileOutputStream(SAVE_FILE_NAME);
-            oos = new ObjectOutputStream(fos);
-
-            // Write here
-            
-            oos.close();
-        } catch (Exception e) {
-            System.out.println("blahhh no game.sav file.. but shouldn't that be fine? it should just create it then.");
-        }
-    }
-
     public void initializeDecksAndPlayers() {
 //    	setupPanels();
     	
@@ -75,23 +63,53 @@ public class Game extends JPanel {
         deck1.shuffle();
         Deck deck2 = new Deck(deck1.split());
 
+        // Testing only
+        // testViaSeedingDecks(deck1, deck2);
+        
         // The players!
-        player1 = new Player("player 1", deck1);
-        player2 = new Player("player 2", deck2);
+        player1 = new Player(player1Name, deck1);
+        player2 = new Player("Computer", deck2);
 
         /** Fill in inner panels */
         // Stuff in the outer panel, surrounding the arena
-        p2Label = new JLabel("Player 2 card count: "+player2.cardCount());
+        p2Label = new JLabel("Computer card count: "+player2.cardCount());
         
-        northNorthPanel.add(p2Label);
-        northSouthPanel.add(new Card("b")); // Back of card to represent deck
+        p2StatsPanel.add(p2Label);
+        p2DeckPanel.add(new Card("b")); // Back of card to represent deck
         
-        p1Label = new JLabel("Player 1 card count: "+player1.cardCount());
+        p1Label = new JLabel(player1Name+" card count: "+player1.cardCount());
         
-        southNorthPanel.add(new Card("b")); // Back of card to represent deck
-        southSouthPanel.add(p1Label, BorderLayout.SOUTH);
+        p1DeckPanel.add(new Card("b")); // Back of card to represent deck
+        p1StatsPanel.add(p1Label, BorderLayout.SOUTH);
     }
 
+    // Seed the deck (testing only)
+    private void testViaSeedingDecks(Deck deck1, Deck deck2) {
+    	deck1.removeCards(0, deck1.size());
+
+    	deck1.add(new Card("3s"));
+    	deck1.add(new Card("5s"));
+    	deck1.add(new Card("6h"));
+    	deck1.add(new Card("js"));
+    	deck1.add(new Card("as"));
+
+    	deck2.removeCards(0, deck2.size());
+
+//    	deck2.add(new Card("4s"));
+    	deck2.add(new Card("5d"));
+    	deck2.add(new Card("6s"));
+    	deck2.add(new Card("jh"));
+    	deck2.add(new Card("ah"));
+
+    	System.out.println("Deck 1:");
+    	deck1.printCards();
+    	System.out.println("\nDeck 2:");
+    	deck2.printCards();
+    }    
+    
+    // private void testP2RunsOutInWar() {
+    // }
+    
     public void setNumCards(int theNumberOfCards) {
         numCards = theNumberOfCards;
     }
@@ -146,8 +164,8 @@ public class Game extends JPanel {
        		// System.out.println("Cleared arena");
     		break;
     	case SHOULD_EXIT_GAME:
-    		System.exit(0);
-    		break;
+    		// Manually fire "Exit game" event
+    		btnExitGame.doClick();
     	} // end switch statement
     	updateArena(); // Updates the card shown in the arena based on active cards
     }
@@ -161,69 +179,67 @@ public class Game extends JPanel {
     	// Deal with removing cards
     	if (p1ActiveCards.isEmpty()) {
     		addCards = false;
-    		centerSouthPanel.removeAll();
+    		p1ArenaPanel.removeAll();
     	}
     	if (p2ActiveCards.isEmpty()) {
     		addCards = false;
-    		centerNorthPanel.removeAll();
+    		p2ArenaPanel.removeAll();
     	}
     	
-    	if (addCards) {
-        	// Deal with adding cards
-        	for (int i=0; i<p1ActiveCards.size(); i++) {
-        		centerNorthPanel.add(p2ActiveCards.get(i)); // p2ActiveCards should be same size as p1ActiveCards
-        		centerSouthPanel.add(p1ActiveCards.get(i));
-        	}
+    	try { // Catch errors with number of cards, and by default, exit the game
+    		if (addCards) {
+    			// Deal with adding cards
+    			for (int i=0; i<p1ActiveCards.size(); i++) {
+    				p2ArenaPanel.add(p2ActiveCards.get(i)); // p2ActiveCards should be same size as p1ActiveCards
+    				p1ArenaPanel.add(p1ActiveCards.get(i));
+    			}
+    		}
+    	} catch (Exception e) {
+    		// The game should exit by the next click
+    		System.out.println("AHHH: "+e.getStackTrace());
+//    		btnExitGame.doClick();
     	}
-
+    	
     	// Update stats
-    	p2Label.setText("Player 2 card count: "+player2.cardCount());
-    	p1Label.setText("Player 1 card count: "+player1.cardCount());
+    	p2Label.setText("Computer card count: "+player2.cardCount());
+    	p1Label.setText(player1Name+" card count: "+player1.cardCount());
     	
-
-    	centerNorthPanel.revalidate();
-    	centerCenterPanel.revalidate();
-    	centerSouthPanel.revalidate();
-    	announcement.revalidate();
-    	revalidate();
     	this.updateUI();
-    	
-        // System.out.println("updated");
     }
     
     // Plays out HALF a war sequence in one through; this method is called twice if there is a one-round war.
     // returns the proper "War over" state
     // post: returns "CONTINUE_WAR" if the war should continue; otherwise, the proper ending war state
     private GameState playWar() {
-        try {
-        	switch(gameState) {
-        	case SHOULD_PLAY_WAR_FACE_DOWN:
-        		gameState = SHOULD_PLAY_WAR_FACE_UP;
-        		p1ActiveCards.add(player1.playFaceDownCard());
-        		p2ActiveCards.add(player2.playFaceDownCard());
-        		return CONTINUE_WAR;
-//        	case SHOULD_PLAY_WAR_FACE_UP:
-        	default: //SHOULD_PLAY_WAR_FACE_UP + SHOULD_TEST_WAR
-        		gameState = SHOULD_TEST_WAR;
-        		p1ActiveCards.add(player1.playCard());
-        		p2ActiveCards.add(player2.playCard());
-//        		return CONTINUE_WAR;
-//        	default: //SHOULD_TEST_WAR:
-        		int p1Val = p1ActiveCards.get(p1ActiveCards.size()-1).getValue();
-        		int p2Val = p2ActiveCards.get(p2ActiveCards.size()-1).getValue(); // get values of last card for both p1 and p2
-        		if (p1Val == p2Val) {
-        			gameState = SHOULD_PLAY_WAR_FACE_DOWN;
-        		    return CONTINUE_WAR; // Play war again
-        		} else if (p1Val > p2Val) {
-        		    return PLAYER_1_WAR_VICTORY; // Player 1 wins just the war, so give him the cards
-        		} else {
-        		    return PLAYER_2_WAR_VICTORY; // Player 2 wins just the war, so give him the cards
-        		}
-        	}
-        } catch (Exception e) { // This happens when a player runs out of cards.
-            // System.out.println("Exception: "+e.getMessage());
-        	return checkForDeadPlayer();
-        }
+		// If either player has 0 cards, we'd have an error - just check for the dead player now!
+		if (player1.cardCount() == 0 || player2.cardCount() == 0)
+			return checkForDeadPlayer();
+    	
+		// Otherwise, consider playing the next War card - face up or down
+    	switch(gameState) {
+    	case SHOULD_PLAY_WAR_FACE_DOWN:
+    		gameState = SHOULD_PLAY_WAR_FACE_UP;
+    		p1ActiveCards.add(player1.playFaceDownCard());
+    		p2ActiveCards.add(player2.playFaceDownCard());
+    		return CONTINUE_WAR;
+    		//        	case SHOULD_PLAY_WAR_FACE_UP:
+    	default: //SHOULD_PLAY_WAR_FACE_UP + SHOULD_TEST_WAR
+    		gameState = SHOULD_TEST_WAR;
+
+    		p1ActiveCards.add(player1.playCard());
+    		p2ActiveCards.add(player2.playCard()); 
+
+    		int p1Val = p1ActiveCards.get(p1ActiveCards.size()-1).getValue();
+    		int p2Val = p2ActiveCards.get(p2ActiveCards.size()-1).getValue(); // get values of last card for both p1 and p2
+    		if (p1Val == p2Val) {
+    			gameState = SHOULD_PLAY_WAR_FACE_DOWN;
+    			return CONTINUE_WAR; // Play war again
+    		} else if (p1Val > p2Val) {
+    			return PLAYER_1_WAR_VICTORY; // Player 1 wins just the war
+    		} else {
+    			return PLAYER_2_WAR_VICTORY; // Player 2 wins just the war
+    		}
+    	}
     }
     
     // Returns proper ending war state
@@ -299,17 +315,19 @@ public class Game extends JPanel {
     	String pre = "<html><b><span style='font-size: 20px'>Game Over: ";
     	switch(i) {
     	case 0:
-    		southNorthPanel.removeAll(); // hide p2's deck
-    		southSouthPanel.removeAll(); // hide p1's deck
+    		p1DeckPanel.removeAll(); // hide p2's deck
+    		p1StatsPanel.removeAll(); // hide p1's deck
     		announcement.setText(pre+"DRAW");
     		break;
     	case 1:
-    		southNorthPanel.removeAll(); // hide p2's deck
-    		announcement.setText(pre+"PLAYER 1 WINS");
+    		p1DeckPanel.removeAll(); // hide p2's deck
+    		announcement.setText(pre+player1Name+" WINS");
+    		listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Player 1 victory"));
     		break;
     	case 2:
-    		southSouthPanel.removeAll(); // hide p1's deck
-    		announcement.setText(pre+"PLAYER 2 WINS");
+    		p1StatsPanel.removeAll(); // hide p1's deck
+    		announcement.setText(pre+"COMPUTER WINS");
+    		listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Player 2 victory"));
     		break;
     	}
     	updateArena();
@@ -327,70 +345,105 @@ public class Game extends JPanel {
 
     // Card-giving methods
     private void makeP1GiveCardsToP2() {
-    	announcement.setText("<html><b><span style='font-size: 20px'>Player 2 wins");
+    	announcement.setText("<html><b><span style='font-size: 20px'>Computer wins");
     	for (int i=0; i<p1ActiveCards.size(); i++) {
 			player2.addCardToDeckBottom(p1ActiveCards.get(i));
 			player2.addCardToDeckBottom(p2ActiveCards.get(i)); // p2ActiveCards is the same size
     	}
     }
     private void makeP2GiveCardsToP1() {
-    	announcement.setText("<html><b><span style='font-size: 20px'>Player 1 wins");
+    	announcement.setText("<html><b><span style='font-size: 20px'>"+player1Name+" wins");
     	for (int i=0; i<p2ActiveCards.size(); i++) {
     		player1.addCardToDeckBottom(p1ActiveCards.get(i));
 			player1.addCardToDeckBottom(p2ActiveCards.get(i));
     	}
     }    
     
+    private void resetGame() {
+        // Reset game state
+        gameState = SHOULD_PLAY_CARDS;
+
+        // Reset panels - removeAll for panels that dynamically get Cards added to them
+        p1ArenaPanel.removeAll();
+        p2ArenaPanel.removeAll();
+        p1DeckPanel.removeAll();
+        p2DeckPanel.removeAll();
+        p1StatsPanel.removeAll();
+        p2StatsPanel.removeAll();
+
+        // Announcement text
+        announcement.setText("");
+
+        // Players' active cards
+        p1ActiveCards.clear();
+        p2ActiveCards.clear();
+        System.out.println("Reset method just called");
+    }
+
     // Called in constructor
     private void setupPanels() {
         /** Creates the primary panels */
         JPanel mainPanel = new JPanel(new BorderLayout());
         
         // The sections of the mainPanel
-        northPanel = new JPanel(new BorderLayout()); // Player 2 info
-        centerPanel = new JPanel(new BorderLayout()); // "arena" where active cards are shown
+        topPanel = new JPanel(new BorderLayout()); // Player 2 info
+        arenaPanel = new JPanel(new BorderLayout()); // "arena" where active cards are shown
         									// divided into BorderLayout, for NORTH (player 2 cards) vs. SOUTH (player 1 cards)
-        southPanel = new JPanel(new BorderLayout()); // Player 1 info
+        p1GeneralPanel = new JPanel(new BorderLayout()); // Player 1 info
         
 	        // Within centerPanel
-	        centerNorthPanel = new JPanel(); // for NORTH side of arena, player 2's active cards
-	        centerNorthPanel.setLayout(new FlowLayout());//new BoxLayout(centerNorthPanel, BoxLayout.X_AXIS));
-	        centerSouthPanel = new JPanel(); // for SOUTH side of arena, player 1's active cards
-	        centerSouthPanel.setLayout(new FlowLayout());//new BoxLayout(centerSouthPanel, BoxLayout.X_AXIS));
-	        centerCenterPanel = new JPanel();
-	        centerCenterPanel.setLayout(new FlowLayout()); // where announcement is, in the very middle of the arena
-	        
-	        // Within north and southPanel
-	        northNorthPanel = new JPanel(new FlowLayout()); // p2 stats
-	        northSouthPanel = new JPanel(new FlowLayout()); // p2 deck
-	        southNorthPanel = new JPanel(new FlowLayout()); // p1 deck
-	        southSouthPanel = new JPanel(new FlowLayout());
+	        p2ArenaPanel = new JPanel(); // for NORTH side of arena, player 2's active cards
+	        p2ArenaPanel.setLayout(new FlowLayout());//new BoxLayout(centerNorthPanel, BoxLayout.X_AXIS));
+	        p1ArenaPanel = new JPanel(); // for SOUTH side of arena, player 1's active cards
+	        p1ArenaPanel.setLayout(new FlowLayout());//new BoxLayout(centerSouthPanel, BoxLayout.X_AXIS));
+	        announcementPanel = new JPanel();
+	        p1DeckPanel = new JPanel(new FlowLayout()); // p1 deck
+	        p1StatsPanel = new JPanel(new FlowLayout());
 
         // Combines panels with panels
-        centerPanel.add(centerNorthPanel, BorderLayout.NORTH);
-        centerPanel.add(centerCenterPanel, BorderLayout.CENTER);
-        centerPanel.add(centerSouthPanel, BorderLayout.SOUTH);
+        arenaPanel.add(p2ArenaPanel, BorderLayout.NORTH);
+        arenaPanel.add(announcementPanel, BorderLayout.CENTER);
+        arenaPanel.add(p1ArenaPanel, BorderLayout.SOUTH);
+        p1GeneralPanel.add(p1DeckPanel, BorderLayout.NORTH);
+        p1GeneralPanel.add(p1StatsPanel, BorderLayout.SOUTH);
         
-        northPanel.add(northNorthPanel, BorderLayout.NORTH);
-        northPanel.add(northSouthPanel, BorderLayout.SOUTH);
-        southPanel.add(southNorthPanel, BorderLayout.NORTH);
-        southPanel.add(southSouthPanel, BorderLayout.SOUTH);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
         
-        mainPanel.add(northPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-        mainPanel.add(southPanel, BorderLayout.SOUTH);
+        // Options
+        optionsPanel = new JPanel();
+        FlowLayout flowLayout = (FlowLayout) optionsPanel.getLayout();
+        flowLayout.setAlignment(FlowLayout.LEFT);
+        topPanel.add(optionsPanel, BorderLayout.NORTH);
         
-        // Arena stuff is all in centerNorthPanel and centerSouthPanel
+        btnExitGame = new JButton("Exit game");
+        btnExitGame.addActionListener(this);
+        
+        optionsPanel.add(btnExitGame);
+        
+        p2GeneralPanel = new JPanel();
+        topPanel.add(p2GeneralPanel, BorderLayout.SOUTH);
+        p2GeneralPanel.setLayout(new BorderLayout(0, 0));
+        
+        // Within north and southPanel
+        p2StatsPanel = new JPanel(new FlowLayout()); // p2 stats
+        p2GeneralPanel.add(p2StatsPanel, BorderLayout.NORTH);
+        p2DeckPanel = new JPanel(new FlowLayout()); // p2 deck
+        p2GeneralPanel.add(p2DeckPanel, BorderLayout.SOUTH);
+        mainPanel.add(arenaPanel, BorderLayout.CENTER);
+        mainPanel.add(p1GeneralPanel, BorderLayout.SOUTH);
+        announcementPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         
         // The announcement label!
         announcement = new JLabel();
-        centerCenterPanel.add(announcement, BorderLayout.CENTER);
-        setLayout(new BorderLayout(0, 0));
+        announcementPanel.add(announcement);
+        
+        setLayout(new BorderLayout());
         
         this.add(mainPanel);
     }
     
     /** Instance fields */
+    private ActionListener listener;
     private int numCards;
     private Player player1, player2; // you are player1, computer is player2
     private ArrayList<Card> p1ActiveCards;
@@ -398,22 +451,20 @@ public class Game extends JPanel {
     private GameState gameState; 
         // to keep track of what type of step() to perform
     
-    // IO
-    private FileInputStream fis;
-    private FileOutputStream fos;
-    private ObjectOutputStream oos;
-    private ObjectInputStream ois;
-
     // For stats
     private JLabel announcement; // e.g., "War!"
     private JLabel p2Label, p1Label;
     
-    private JPanel northPanel, centerPanel, southPanel;
-    private JPanel centerNorthPanel, centerSouthPanel, centerCenterPanel;
-    private JPanel northNorthPanel, northSouthPanel, southNorthPanel, southSouthPanel;
+    private JPanel topPanel, arenaPanel, p1GeneralPanel;
+    private JPanel p2ArenaPanel, p1ArenaPanel, announcementPanel;
+    private JPanel p2StatsPanel, p2DeckPanel, p1DeckPanel, p1StatsPanel;
     
     private static final String WAR_STRING = "<html><b><span style='font-size: 30px'>WAR</span></b></html>";
-    private static final String SAVE_FILE_NAME = "game.sav";
 
     private static final long serialVersionUID = 1L;
+    private JButton btnExitGame;
+    private JPanel optionsPanel;
+    private JPanel p2GeneralPanel;
+
+    private String player1Name;
 }

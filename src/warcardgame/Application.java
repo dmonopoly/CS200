@@ -6,18 +6,26 @@ import static warcardgame.MenuState.MAIN_MENU;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
@@ -30,11 +38,18 @@ public class Application extends JFrame implements ActionListener {
     public Application() {
         // Set frame dimensions
         maxX = 900;
-        maxY = 600;
+        maxY = 750;
         setSize(maxX, maxY);
         
         // Initialize other variables
         menuState = MAIN_MENU;
+        existingPlayers = new ArrayList<PlayerPanel>(); 
+        chosenPlayerIndex = 0;
+        
+        // Read in data, if any
+        readData();
+        
+        /** Handle panels*/
         ultimatePanel = new JPanel(new BorderLayout());
         
         // Top menu
@@ -44,7 +59,7 @@ public class Application extends JFrame implements ActionListener {
         
         JLabel lblWar = new JLabel("War");
         lblWar.setHorizontalAlignment(SwingConstants.CENTER);
-        lblWar.setFont(new Font("Lucida Grande", Font.BOLD, 26));
+        lblWar.setFont(new Font("Lucida Calligraphy", Font.BOLD, 26));
         topMenuPanel.add(lblWar);
         
         // Main area
@@ -54,14 +69,42 @@ public class Application extends JFrame implements ActionListener {
         // First card panel: newGamePanel - i.e., a panel within the mainAreaPanel cardLayout
         firstPanel = new JPanel();
         mainAreaPanel.add(firstPanel, FIRST_PANEL);
+        firstPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        
+        firstBoxPanel = new JPanel();
+        firstPanel.add(firstBoxPanel);
+        firstBoxPanel.setLayout(new BoxLayout(firstBoxPanel, BoxLayout.Y_AXIS));
+        
+        firstButtonsPanel = new JPanel();
+        firstBoxPanel.add(firstButtonsPanel);
+        firstButtonsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         
         btnNewGame = new JButton("New game");
+        btnNewGame.setFont(new Font("Lucida Grande", Font.PLAIN, 20));
+        firstButtonsPanel.add(btnNewGame);
+        btnNewGame.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnNewGame.addActionListener(this);
         
-        firstPanel.add(btnNewGame);
-        
         btnManagePlayers = new JButton("Manage players");
-        firstPanel.add(btnManagePlayers);
+        btnManagePlayers.setFont(new Font("Lucida Grande", Font.PLAIN, 20));
+        firstButtonsPanel.add(btnManagePlayers);
+        btnManagePlayers.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnManagePlayers.addActionListener(this);
+        
+        firstLabelsPanel = new JPanel();
+        firstBoxPanel.add(firstLabelsPanel);
+        firstLabelsPanel.setLayout(new BoxLayout(firstLabelsPanel, BoxLayout.Y_AXIS));
+        
+        lblSelectedPlayer = new JLabel("Selected player: ");
+        lblSelectedPlayer.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblSelectedPlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 18));
+        firstLabelsPanel.add(lblSelectedPlayer);
+        
+        lblPlayerName = new JLabel();
+        lblPlayerName.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblPlayerName.setText(getDefaultPlayerName());
+        lblPlayerName.setFont(new Font("Lucida Grande", Font.BOLD, 21));
+        firstLabelsPanel.add(lblPlayerName);
         
         // Second card panel: setupPanel
         setupPanel = new JPanel();
@@ -74,33 +117,122 @@ public class Application extends JFrame implements ActionListener {
         lblSetNumCards = new JLabel("Number of cards to be used: ");
         setNumCardsPanel.add(lblSetNumCards);
         
-        String[] comboOptions = { "2","4","6","8","10","12","14","16","18","20","22","24","26" };
+        String[] comboOptions = { "2","4","6","8","10","12","14","16","18","20","22","24","26","28","30","32","34","36","38","40","42","44","46","48","50","52" };
         
         comboBoxNumCards = new JComboBox(comboOptions);
-        comboBoxNumCards.setSelectedIndex(12);
+        comboBoxNumCards.setSelectedIndex(0);
         setNumCardsPanel.add(comboBoxNumCards);
         
         startPanel = new JPanel();
         setupPanel.add(startPanel);
         
         btnStart = new JButton("Start!");
+        btnStart.setFont(new Font("Lucida Grande", Font.PLAIN, 64));
         btnStart.addActionListener(this);
         startPanel.add(btnStart);
         
         // Third card panel: gamePanel
-        gamePanel = new Game();
+        gamePanel = new GamePanel(lblPlayerName.getText(), this); // recreated for each new game
         mainAreaPanel.add(gamePanel, GAME_PANEL);
+
+        // Fourth card panel: panel for players
+        playerControlsPanel = new JPanel();
+        mainAreaPanel.add(playerControlsPanel, PLAYER_CONTROLS_PANEL);
+        playerControlsPanel.setLayout(new BoxLayout(playerControlsPanel, BoxLayout.Y_AXIS));
+        
+        playerTopPanel = new JPanel();
+        playerControlsPanel.add(playerTopPanel);
+        
+        playerTopBoxPanel = new JPanel();
+        playerTopPanel.add(playerTopBoxPanel);
+        playerTopBoxPanel.setLayout(new BoxLayout(playerTopBoxPanel, BoxLayout.Y_AXIS));
+        
+        lblManagePlayers = new JLabel("Manage Players");
+        lblManagePlayers.setAlignmentX(Component.CENTER_ALIGNMENT);
+        playerTopBoxPanel.add(lblManagePlayers);
+        lblManagePlayers.setFont(new Font("Lucida Calligraphy", Font.PLAIN, 25));
+        
+        btnCreatePlayer = new JButton("Create player");
+        btnCreatePlayer.addActionListener(this);
+        btnCreatePlayer.setAlignmentX(Component.CENTER_ALIGNMENT);
+        playerTopBoxPanel.add(btnCreatePlayer);
+        
+        playerIndexPanel = new JPanel();
+        playerControlsPanel.add(playerIndexPanel);
+        playerIndexPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        
+        // - Use read-in player data
+        for (int i=0; i<existingPlayers.size(); i++) {
+            playerIndexPanel.add(existingPlayers.get(i));
+        }
+        
+        donePanel = new JPanel();
+        playerControlsPanel.add(donePanel);
+        
+        btnDone = new JButton("Done");
+        btnDone.setFont(new Font("Lucida Grande", Font.PLAIN, 20));
+        btnDone.addActionListener(this);
+        donePanel.add(btnDone);
 
         // Card layout prep
         ultimatePanel.add(mainAreaPanel, BorderLayout.CENTER);
         layout = (CardLayout)(mainAreaPanel.getLayout());
         layout.show(mainAreaPanel, "newGamePanel");
-
+        
         // Deal with listeners
         gamePanel.addMouseListener(new MyMouseListener());
         // addKeyListener(new MyKeyListener());
         
         setContentPane(ultimatePanel);
+    }
+    
+    // Returns the default player name upon start up
+    public String getDefaultPlayerName() {
+        if (!existingPlayers.isEmpty()) {
+            return existingPlayers.get(chosenPlayerIndex).getName();
+        } else {
+            return "None";
+        }
+    }
+    
+    // TODO
+    private void readData() {
+    	// Temp seeding players
+        Player p1 = new Player("Johnny", new Deck());
+        Player p2 = new Player("Sam", new Deck());
+        existingPlayers.add(new PlayerPanel(p1, this));
+        existingPlayers.add(new PlayerPanel(p2, this));
+        
+//        System.out.println("Num existing players: "+existingPlayers.size());
+        
+        try {
+            fis = new FileInputStream(SAVE_FILE_NAME);
+            ois = new ObjectInputStream(fis);
+            
+            // Read here
+//            Player p = (Player) ois.readObject();
+//            existingPlayers.add(new PlayerPanel(p, this));
+
+            ois.close();
+        } catch (Exception e) {
+//            e.printStackTrace();
+        	System.out.println("No file to read");
+        }
+    }
+    
+    // TODO
+    private void writeData() {
+        try {
+            fos = new FileOutputStream(SAVE_FILE_NAME);
+            oos = new ObjectOutputStream(fos);
+
+            // Write here
+//            oos.writeObject(player1);
+            
+            oos.close();
+        } catch (Exception e) {
+            System.out.println("blahhh no game.sav file.. but shouldn't that be fine? it should just create it then.");
+        }
     }
     
     public static void main(String[] args) {
@@ -111,41 +243,84 @@ public class Application extends JFrame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
+   	    System.out.println("action command: " + e.getActionCommand());
     	switch (menuState) {
     	case MAIN_MENU:
     		if (e.getSource() == btnNewGame) {
-    			menuState = GAME_SETUP;
-    			layout.next(mainAreaPanel); // to setupPanel
-    			
+                changeMenuState(GAME_SETUP);
+    			layout.show(mainAreaPanel, SETUP_PANEL); // to setupPanel
     		} else if (e.getSource() == btnManagePlayers) {
-    			// HERE
-    		}
+    			refreshPlayers();
+    			layout.show(mainAreaPanel, PLAYER_CONTROLS_PANEL); // to playersPanel
+    		} else if (e.getSource() == btnDone) {
+                layout.show(mainAreaPanel, FIRST_PANEL);
+            } else if (e.getSource() == btnCreatePlayer) {
+            	// Create a new player
+            	String name = JOptionPane.showInputDialog("Enter a name: "); // Returns "null" if canceled
+            	if (name != null && !name.trim().equals("")) {
+            		Player newPlayer = new Player(name, new Deck());
+            		existingPlayers.add(new PlayerPanel(newPlayer, this));
+
+            		playerIndexPanel.add(existingPlayers.get(existingPlayers.size()-1));
+            		playerIndexPanel.updateUI();
+            	}
+            } else if (e.getActionCommand().contains("Selected player")) {
+            	// Grab the player name and find him
+            	String tmp = e.getActionCommand();
+            	String pName = tmp.substring(tmp.indexOf(":")+2);
+            	chosenPlayerIndex = findPlayerIndex(pName);
+                lblPlayerName.setText(pName); // or existingPlayers.get(chosenPlayerIndex).getName()
+                JOptionPane.showMessageDialog(this, "Player selected", "Notification", JOptionPane.PLAIN_MESSAGE);
+            } 
     		break;
     	case GAME_SETUP:
     		if (e.getSource() == btnStart) {
-    			menuState = GAME_RUNNING;
-    			layout.next(mainAreaPanel); // to gamePanel
+                changeMenuState(GAME_RUNNING);
+    			layout.show(mainAreaPanel, GAME_PANEL); // to gamePanel
                 startGame(); // initialize other members of Game class
     		}
     		break;
     	case GAME_RUNNING:
-//            if (e.getSource() == ) {
-//                
-//            }
+            if (e.getActionCommand() == "Exit game") { // ActionCommand is determined by JButton's text
+            	// Return to main menu
+                menuState = MAIN_MENU;
+                layout.show(mainAreaPanel, FIRST_PANEL);
+            } else if (e.getActionCommand() == "Player 1 victory") { // from GamePanel
+            	// After execution, GamePanel should still be running. But 
+            	existingPlayers.get(chosenPlayerIndex).addOneWin();
+            } else if (e.getActionCommand() == "Player 2 victory") { // from GamePanel
+                existingPlayers.get(chosenPlayerIndex).addOneLoss();
+            } // need to guarantee changed menustate? I guess not. 
     		break;
     	}
     }
     
+    // Returns the index of the player in existingPlayers based on name
+    private int findPlayerIndex(String name) {
+        for (int i=0; i<existingPlayers.size(); i++)
+            if (name.equals(existingPlayers.get(i).getName()))
+                return i;
+
+        return -1;
+    }
+
+    // Refresh all playerPanels in the manage players panel
+    private void refreshPlayers() {
+        for (PlayerPanel p : existingPlayers) {
+            p.refresh();
+        }
+    }
+    
+    private void changeMenuState(MenuState state) {
+        if (menuState != state) {
+            System.out.println("Menu state changed to "+state);
+            menuState = state;
+        }
+    }
+
     private class MyMouseListener implements MouseListener {
     	@Override
         public void mouseClicked(MouseEvent e) {
-            switch (menuState) {
-            case GAME_RUNNING:
-                System.out.println("mouseClicked");
-
-                gamePanel.step();
-                break;
-            }
         }
 
 		@Override
@@ -158,6 +333,18 @@ public class Application extends JFrame implements ActionListener {
 
 		@Override
 		public void mousePressed(MouseEvent arg0) {
+            switch (menuState) {
+            case GAME_RUNNING:
+                gamePanel.step();
+
+//                // Go back to main menu
+//                if (menuState == MAIN_MENU) {
+//                    layout.show(mainAreaPanel, FIRST_PANEL);
+//                }
+                break;
+            default:
+            	break;
+            }
 		}
 
 		@Override
@@ -168,31 +355,55 @@ public class Application extends JFrame implements ActionListener {
     private void startGame() {
         int numCards = Integer.parseInt((String) comboBoxNumCards.getSelectedItem()); // guaranteed to pass b/c of combo box
         gamePanel.setNumCards(numCards);
+        gamePanel.setPlayerName(lblPlayerName.getText());
         gamePanel.initializeDecksAndPlayers();
     }    
     
     /* Instance fields */
+    private int maxX, maxY;
+    private int chosenPlayerIndex;
     private MenuState menuState;
-    private int maxX;
-    private int maxY;
+    
+    // CardLayout panel keys
+    private static final String FIRST_PANEL = "FIRST_PANEL";
+    private static final String SETUP_PANEL = "SETUP_PANEL";
+    private static final String GAME_PANEL = "GAME_PANEL";
+    private static final String PLAYER_CONTROLS_PANEL = "PLAYER_CONTROLS_PANEL";
+ 
+    // IO
+    private FileInputStream fis;
+    private FileOutputStream fos;
+    private ObjectOutputStream oos;
+    private ObjectInputStream ois;
+    private static final String SAVE_FILE_NAME = "game.sav";
 
-    // Panels
+    // Panels & Components
     private JPanel ultimatePanel;
-    private Game gamePanel; // essential
+    private GamePanel gamePanel; // essential
     private CardLayout layout; // used with mainAreaPanel
     private JPanel mainAreaPanel, firstPanel, setupPanel; 
+    private JPanel playerControlsPanel;
+    private JPanel playerTopBoxPanel;
+    private JPanel donePanel;
+    private JPanel playerIndexPanel;
+    private ArrayList<PlayerPanel> existingPlayers;
     
-    // Components
     private JButton btnNewGame;
     private JPanel setNumCardsPanel;
     private JLabel lblSetNumCards;
     private JComboBox comboBoxNumCards;
     private JPanel startPanel;
     private JButton btnStart;
+    private JLabel lblManagePlayers;
     private JButton btnManagePlayers;
+    private JButton btnDone;
+
+    private JLabel lblSelectedPlayer;
+    private JPanel firstBoxPanel;
+    private JPanel firstButtonsPanel;
+    private JLabel lblPlayerName;
+    private JPanel firstLabelsPanel;
+    private JButton btnCreatePlayer;
+    private JPanel playerTopPanel;
     
-    // CardLayout panel keys
-    private static final String FIRST_PANEL = "FIRST_PANEL";
-    private static final String SETUP_PANEL = "SETUP_PANEL";
-    private static final String GAME_PANEL = "GAME_PANEL";
 }
