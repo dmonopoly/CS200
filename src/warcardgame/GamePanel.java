@@ -62,7 +62,7 @@ public class GamePanel extends JPanel implements ActionListener{
         Deck deck2 = new Deck(deck1.split());
 
         // Testing only
-        // testViaSeedingDecks(deck1, deck2);
+//         testViaSeedingDecks(deck1, deck2);
         
         // The players!
         player1 = new Player(player1Name, deck1);
@@ -99,9 +99,9 @@ public class GamePanel extends JPanel implements ActionListener{
     	deck2.add(new Card("jh"));
     	deck2.add(new Card("ah"));
 
-    	System.out.println("Deck 1:");
+    	p.println("Deck 1:");
     	deck1.printCards();
-    	System.out.println("\nDeck 2:");
+    	p.println("\nDeck 2:");
     	deck2.printCards();
     }    
     
@@ -125,20 +125,20 @@ public class GamePanel extends JPanel implements ActionListener{
 	    		int p2Value = p2ActiveCards.get(0).getValue();
 	    		if (p1Value == p2Value) {
 	    			// WAR!
-                    // System.out.println("War mode turned on");
+                    // p.println("War mode turned on");
 	    			announcement.setText(WAR_STRING);
 	    			gameState = SHOULD_PLAY_WAR_FACE_DOWN;
 	    		} else {
 	    			gameState = SHOULD_CLEAR_CARDS;
 	    			if (p1Value > p2Value) {
 	    				makeP2GiveCardsToP1();
-    	   				// System.out.println("p1 victory");
+    	   				// p.println("p1 victory");
 	    			} else {
 	    				makeP1GiveCardsToP2();
-    	   				// System.out.println("p2 victory");
+    	   				// p.println("p2 victory");
 	    			}
 	    		}
-    	   		// System.out.println("Played cards normally");
+    	   		// p.println("Played cards normally");
     		} catch (Exception e) { // This happens if a player is dead (index out of bounds in playCard())
     			GameState g = checkForDeadPlayer();
     			endWar(g); // This should not receive "CONTINUE_WAR"... the only case that endWar doesn't check for, and the case that should never happen here (we're not in a war)
@@ -148,10 +148,10 @@ public class GamePanel extends JPanel implements ActionListener{
     	case SHOULD_PLAY_WAR_FACE_DOWN:
     	case SHOULD_TEST_WAR:
     		GameState resultOfWar = playWar();
-   		    // System.out.println("Started a WAR!");
+   		    // p.println("Started a WAR!");
     		if (resultOfWar != CONTINUE_WAR) {
     			endWar(resultOfWar); // post: gameState = SHOULD_CLEAR_CARDS
-       			// System.out.println("Just ended a war");
+       			// p.println("Just ended a war");
     		}		
     		break;
     	case SHOULD_CLEAR_CARDS:
@@ -159,7 +159,7 @@ public class GamePanel extends JPanel implements ActionListener{
     		announcement.setText(""); // reset action
     		p1ActiveCards.clear();
     		p2ActiveCards.clear();
-       		// System.out.println("Cleared arena");
+       		// p.println("Cleared arena");
     		break;
     	case SHOULD_EXIT_GAME:
     		// Manually fire "Exit game" event
@@ -194,7 +194,7 @@ public class GamePanel extends JPanel implements ActionListener{
     		}
     	} catch (Exception e) {
     		// The game should exit by the next click
-    		System.out.println("AHHH: "+e.getStackTrace());
+    		p.println("AHHH: "+e.getStackTrace());
 //    		btnExitGame.doClick();
     	}
     	
@@ -270,7 +270,7 @@ public class GamePanel extends JPanel implements ActionListener{
         } else if (p1isOut) {
         	return PLAYER_2_GAME_VICTORY;
         } else {
-            // System.out.println("Something is amiss.");
+            // p.println("Something is amiss.");
         	return DRAW;
         }
     }
@@ -281,25 +281,25 @@ public class GamePanel extends JPanel implements ActionListener{
     private void endWar(GameState state) {
     	switch (state) {
     	case PLAYER_1_WAR_VICTORY:
-   	        // System.out.println("p1 war victory");
+   	        // p.println("p1 war victory");
     		makeP2GiveCardsToP1(); // p2 gives cards to player1
     		gameState = SHOULD_CLEAR_CARDS;
     		break;
     	case PLAYER_2_WAR_VICTORY:
-   	        // System.out.println("p2 war victory");
+   	        // p.println("p2 war victory");
     		makeP1GiveCardsToP2(); // p1 gives cards to player2
     		gameState = SHOULD_CLEAR_CARDS;
     		break;
     	case DRAW:
-       	    // System.out.println("draw");
+       	    // p.println("draw");
     		concludeGame(0);
     		break;
     	case PLAYER_1_GAME_VICTORY:
-       	    // System.out.println("p1 game victory");
+       	    // p.println("p1 game victory");
     		concludeGame(1);
     		break;
     	case PLAYER_2_GAME_VICTORY:
-       	    // System.out.println("p2 game victory");
+       	    // p.println("p2 game victory");
     		concludeGame(2);
     		break;
     	}
@@ -309,7 +309,7 @@ public class GamePanel extends JPanel implements ActionListener{
     // Concludes the game
     // @params i: 0 -> draw, 1 -> player1 victory, 2 -> player2 victory 
     private void concludeGame(int i) {
-   	    // System.out.println("Game result: "+i);
+   	    // p.println("Game result: "+i);
     	String pre = "<html><b><span style='font-size: 20px'>Game Over: ";
     	switch(i) {
     	case 0:
@@ -440,6 +440,7 @@ public class GamePanel extends JPanel implements ActionListener{
     }
     
     /** Instance fields */
+    private Printer p = new Printer();
     private ActionListener listener;
     private int numCards;
     private Player player1, player2; // you are player1, computer is player2

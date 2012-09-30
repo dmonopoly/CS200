@@ -218,9 +218,9 @@ public class Application extends JFrame implements ActionListener {
             }
     		reader.close();
     	} catch (EOFException e) {
-    		System.out.println("EOF exception hit");
+    		p.println("End of file reading");
     	} catch (IOException e) {
-    		System.out.println("No file to read");
+    		p.println("No file to read");
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
@@ -232,15 +232,14 @@ public class Application extends JFrame implements ActionListener {
             writer = new ObjectOutputStream(new FileOutputStream(SAVE_FILE_NAME));
 
             // Write here
-            for (PlayerPanel p: existingPlayerPanels) {
-            	System.out.println(p.getPlayer());
-                writer.writeObject(p.getPlayer());
+            for (PlayerPanel panel: existingPlayerPanels) {
+                writer.writeObject(panel.getPlayer());
             }
             
             writer.close();
         } catch (Exception e) {
         	e.printStackTrace();
-//            System.out.println("blahhh no game.sav file.. but shouldn't that be fine? it should just create it then.");
+//            p.println("blahhh no game.sav file.. but shouldn't that be fine? it should just create it then.");
         }
     }
     
@@ -252,7 +251,7 @@ public class Application extends JFrame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        // System.out.println("action command: " + e.getActionCommand());
+        p.println("action command: " + e.getActionCommand());
         switch (menuState) {
         case MAIN_MENU:
         	if (e.getSource() == btnNewGame) {
@@ -330,15 +329,15 @@ public class Application extends JFrame implements ActionListener {
 
     // Refresh all playerPanels in the manage players panel
     private void refreshPlayers() {
-    	for (PlayerPanel p : existingPlayerPanels) {
-    		p.refresh();
+    	for (PlayerPanel panel : existingPlayerPanels) {
+    		panel.refresh();
     	}
     }
 
     private void changeMenuState(MenuState state) {
     	if (menuState != state) {
     		menuState = state;
-    		System.out.println("Menu state changed to "+state);
+    		p.println("Menu state changed to "+state);
     	}
     }
 
@@ -379,6 +378,7 @@ public class Application extends JFrame implements ActionListener {
     }    
     
     /* Instance fields */
+    private Printer p = new Printer();
     private int maxX, maxY;
     private int chosenPlayerIndex;
     private MenuState menuState;

@@ -115,6 +115,8 @@ public class PlayerPanel extends JPanel implements ActionListener {
 	}
 
 	/** Instance fields */
+	private Printer p = new Printer();
+
 	private ActionListener listener;
 	private Player player;
 
