@@ -1,5 +1,6 @@
 package warcardgame;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -8,7 +9,7 @@ import java.util.Random;
  * A class that has many Cards
  * @author David Zhang
  */
-public class Deck {
+public class Deck implements Serializable {
     public Deck(ArrayList<Card> theCards) {
     	cards = theCards;
     }

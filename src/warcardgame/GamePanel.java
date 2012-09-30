@@ -42,10 +42,8 @@ public class GamePanel extends JPanel implements ActionListener{
     }
 
     public void actionPerformed(ActionEvent e) {
-    	System.out.println("GamePanel actionPerformed");
         if (e.getSource() == btnExitGame) {
         	resetGame();
-            System.out.println("should be firing exit game now");
         	// passes to Application to change menuState
         	listener.actionPerformed(new ActionEvent((Object) btnExitGame, ActionEvent.ACTION_PERFORMED, "Exit game"));
         }
@@ -377,7 +375,6 @@ public class GamePanel extends JPanel implements ActionListener{
         // Players' active cards
         p1ActiveCards.clear();
         p2ActiveCards.clear();
-        System.out.println("Reset method just called");
     }
 
     // Called in constructor

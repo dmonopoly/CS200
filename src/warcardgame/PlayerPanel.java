@@ -75,13 +75,20 @@ public class PlayerPanel extends JPanel implements ActionListener {
 		btnSelectPlayer = new JButton("Select");
 		btnSelectPlayer.addActionListener(this);
 		btnSelectPlayer.setAlignmentX(Component.CENTER_ALIGNMENT);
-		btnSelectPlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 14));
+		btnSelectPlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 20));
 		playerButtonPanel.add(btnSelectPlayer);
+		
+		btnDeletePlayer = new JButton("Delete");
+		btnDeletePlayer.addActionListener(this);
+		btnDeletePlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 12));
+		playerButtonPanel.add(btnDeletePlayer);
 	}
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == btnSelectPlayer) {
 			listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Selected player: "+player.getName()));
+		} else if (e.getSource() == btnDeletePlayer) {
+			listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Deleted player: "+player.getName()));
 		}
 	}
 	
@@ -103,20 +110,25 @@ public class PlayerPanel extends JPanel implements ActionListener {
 		return player.getName();
 	}
 
+	public Player getPlayer() {
+		return player;
+	}
+
 	/** Instance fields */
 	private ActionListener listener;
 	private Player player;
 
-	JPanel playerBoxPanel;
-	JPanel namePanel;
-	JLabel lblName;
-	JPanel statsPanel;
-	JPanel winPanel;
-	JLabel lblNumberOfWins;
-	JLabel lblWinCount;
-	JPanel lossPanel;
-	JLabel lblNumberOfLosses;
-	JLabel lblLossCount;
-	JPanel playerButtonPanel;
-	JButton btnSelectPlayer;
+	private JPanel playerBoxPanel;
+	private JPanel namePanel;
+	private JLabel lblName;
+	private JPanel statsPanel;
+	private JPanel winPanel;
+	private JLabel lblNumberOfWins;
+	private JLabel lblWinCount;
+	private JPanel lossPanel;
+	private JLabel lblNumberOfLosses;
+	private JLabel lblLossCount;
+	private JPanel playerButtonPanel;
+	private JButton btnSelectPlayer;
+	private JButton btnDeletePlayer;
 }
