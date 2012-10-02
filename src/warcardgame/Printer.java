@@ -5,13 +5,13 @@ package warcardgame;
  * This allows turning off print and println statements without having to tediously search for them.
  * @author David Zhang
  */
-public final class Printer {
+public class Printer {
 	private boolean on;
 
 	public Printer() {
-		// adjust as appropriate when coding
-		turnOn();
-//		turnOff();
+		// Adjust as appropriate when coding
+//		turnOn();
+		turnOff();
 	}
 	
 	public void print(Object obj) {

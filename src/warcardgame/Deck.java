@@ -78,7 +78,7 @@ public class Deck implements Serializable {
     
     public void printCards() {
     	for (Card c : cards)
-            System.out.print(c + " ");
+            p.print(c + " ");
     }
     
     public void add(Card c) {
@@ -123,5 +123,6 @@ public class Deck implements Serializable {
     }
     
     /* Instance fields */
+    private Printer p;
     private ArrayList<Card> cards; // cards[0] is the bottom card; cards[size-1] is the top card
 }

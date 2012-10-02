@@ -130,7 +130,7 @@ public class Application extends JFrame implements ActionListener {
         String[] comboOptions = { "2","4","6","8","10","12","14","16","18","20","22","24","26","28","30","32","34","36","38","40","42","44","46","48","50","52" };
         
         comboBoxNumCards = new JComboBox(comboOptions);
-        comboBoxNumCards.setSelectedIndex(0);
+        comboBoxNumCards.setSelectedIndex(15);
         setNumCardsPanel.add(comboBoxNumCards);
         
         startPanel = new JPanel();
@@ -198,7 +198,7 @@ public class Application extends JFrame implements ActionListener {
     }
     
     // Returns the default player name upon start up
-    public String getDefaultPlayerName() {
+    private String getDefaultPlayerName() {
         if (!existingPlayerPanels.isEmpty()) {
             return existingPlayerPanels.get(chosenPlayerIndex).getName();
         } else {
@@ -285,16 +285,18 @@ public class Application extends JFrame implements ActionListener {
                 lblPlayerName.setText(pName); // or existingPlayerPanels.get(chosenPlayerIndex).getName()
         		
                 JOptionPane.showMessageDialog(this, "Player selected", "Notification", JOptionPane.PLAIN_MESSAGE);
-        	} else if (e.getActionCommand().contains("Deleted player")) {
-                // Delete a player
-                String tmp = e.getActionCommand();
-                String pName = tmp.substring(tmp.indexOf(":")+2);
-                int pIndex = findPlayerIndex(pName);
-
-                existingPlayerPanels.remove(pIndex);
-
-                JOptionPane.showMessageDialog(this, "Player deleted", "Notification", JOptionPane.PLAIN_MESSAGE);
-            }
+        	} 
+        	// Unneeded; maybe use in future version
+//        	else if (e.getActionCommand().contains("Deleted player")) {
+//                // Delete a player
+//                String tmp = e.getActionCommand();
+//                String pName = tmp.substring(tmp.indexOf(":")+2);
+//                int pIndex = findPlayerIndex(pName);
+//
+//                existingPlayerPanels.remove(pIndex);
+//
+//                JOptionPane.showMessageDialog(this, "Player deleted", "Notification", JOptionPane.PLAIN_MESSAGE);
+//            }
         	break;
         case GAME_SETUP:
         	if (e.getSource() == btnStart) {

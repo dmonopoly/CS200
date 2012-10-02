@@ -77,19 +77,16 @@ public class PlayerPanel extends JPanel implements ActionListener {
 		btnSelectPlayer.setAlignmentX(Component.CENTER_ALIGNMENT);
 		btnSelectPlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 20));
 		playerButtonPanel.add(btnSelectPlayer);
-		
-		btnDeletePlayer = new JButton("Delete");
-		btnDeletePlayer.addActionListener(this);
-		btnDeletePlayer.setFont(new Font("Lucida Grande", Font.PLAIN, 12));
-		playerButtonPanel.add(btnDeletePlayer);
 	}
 
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == btnSelectPlayer) {
 			listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Selected player: "+player.getName()));
-		} else if (e.getSource() == btnDeletePlayer) {
-			listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Deleted player: "+player.getName()));
-		}
+		} 
+		// Unneeded; maybe use in future version
+//		else if (e.getSource() == btnDeletePlayer) {
+//			listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Deleted player: "+player.getName()));
+//		}
 	}
 	
 	public void refresh() {
@@ -132,5 +129,4 @@ public class PlayerPanel extends JPanel implements ActionListener {
 	private JLabel lblLossCount;
 	private JPanel playerButtonPanel;
 	private JButton btnSelectPlayer;
-	private JButton btnDeletePlayer;
 }

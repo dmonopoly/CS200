@@ -18,8 +18,6 @@ public class Player implements Serializable {
 		deck.setFaceUpForCard(deck.size()-1, true); // make it faceUp
 		Card c = deck.pop();
 		
-//		System.out.println(c.getValue() + "|" + name);
-		
 		return c;
 	}
 	
