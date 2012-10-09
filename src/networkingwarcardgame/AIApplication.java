@@ -1,35 +1,17 @@
 package networkingwarcardgame;
 
-import static networkingwarcardgame.MenuState.GAME_RUNNING;
-import static networkingwarcardgame.MenuState.GAME_SETUP;
-import static networkingwarcardgame.MenuState.MAIN_MENU;
-
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.EOFException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 
 /**
  * Handles the AI program that can play War. This essentially creates a GamePanel and calls its step() function at time intervals.
@@ -42,6 +24,21 @@ public class AIApplication extends JFrame implements ActionListener {
 
 		app.setVisible(true);
 		app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		ActionListener stepHandler = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				app.step(); // deal with passing data...
+			}
+		};
+		
+		// Start timer that calls step appropriately
+		Timer timer = new Timer(1000, stepHandler); // ms, listener
+		timer.setInitialDelay(1900); // ms before first fire
+		timer.start();
+	}
+	
+	public void step() {
+		gamePanel.step();
 	}
 
 	public AIApplication() {
@@ -81,7 +78,8 @@ public class AIApplication extends JFrame implements ActionListener {
 
 	// Not really used by AI, but necessary for gamePanel
 	public void actionPerformed(ActionEvent e) {
-		
+//		p.println("test");
+////		gamePanel.step();
 	}
 
 	// Initialize gamePanel components and start the game
@@ -95,7 +93,7 @@ public class AIApplication extends JFrame implements ActionListener {
 	/* Instance fields */
 	private Printer p = new Printer();
 	private int maxX, maxY;
-
+	
 	// Panels & Components
 	private JPanel ultimatePanel;
 	private GamePanel gamePanel; // essential
@@ -103,5 +101,4 @@ public class AIApplication extends JFrame implements ActionListener {
 	private ArrayList<PlayerPanel> existingPlayerPanels;
 
 	private JLabel lblPlayerName;
-
 }

@@ -52,11 +52,9 @@ public class GamePanel extends JPanel implements ActionListener{
     public void setPlayerName(String s) {
     	player1Name = s;
     }
-    
+
+    // Called from outside this class to time initialization properly
     public void initializeDecksAndPlayers() {
-//    	setupPanels();
-    	p.println("whattt");
-    	
         // Prepare decks for players
         Deck deck1 = new Deck(numCards);
         deck1.shuffle();
@@ -80,7 +78,6 @@ public class GamePanel extends JPanel implements ActionListener{
         
         p1DeckPanel.add(new Card("b")); // Back of card to represent deck
         p1StatsPanel.add(p1Label, BorderLayout.SOUTH);
-        p.println("whattt3");
     }
 
     // Seed the deck (testing only)
