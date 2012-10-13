@@ -1,22 +1,28 @@
-package networkingwarcardgame;
+package serverclientpractice;
+
+import static serverclientpractice.Message.TEST_SERVER;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 
-import serverclientpractice.Message;
-
-// Status: Just finished matching my serverclientpractice's Server
 public class Server {
+	private static int PORT_NUMBER = 31415;
+	private ServerSocket ss = null;
+	private Socket s = null;
 	
-	public static void main(String[] args) {
+	public static void main( String[] args ) {
+		// 1
 		Server server = new Server();
 	}
-
+	
 	public Server() {
+		// Grab port number
+		
+		
+		// 2
 		try {
 			ss = new ServerSocket(PORT_NUMBER);
 		} catch (Exception e) {
@@ -37,7 +43,7 @@ public class Server {
 			System.out.println( "A client has connected" );
 		}
 	}
-	
+
 	// Internal class that handles each new thread for a client
 	class HandleAClient implements Runnable {
 		// Prepare connection and communication variables
@@ -89,11 +95,4 @@ public class Server {
 		}
 	}
 	
-	/** Instance fields */
-	// Connection fields
-	private static int PORT_NUMBER = 31415;
-	private ServerSocket ss = null;
-	private Socket s = null;
-	
-	private ArrayList<Player> players;
 }

@@ -24,20 +24,9 @@ public class AIApplication extends JFrame implements ActionListener {
 
 		app.setVisible(true);
 		app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		ActionListener stepHandler = new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				app.step(); // deal with passing data...
-			}
-		};
-		
-		// Start timer that calls step appropriately
-		Timer timer = new Timer(1000, stepHandler); // ms, listener
-		timer.setInitialDelay(1900); // ms before first fire
-		timer.start();
 	}
 	
-	public void step() {
+	private void step() {
 		gamePanel.step();
 	}
 
@@ -76,23 +65,38 @@ public class AIApplication extends JFrame implements ActionListener {
 		startGame();
 	}
 
-	// Not really used by AI, but necessary for gamePanel
+	// Called by timer from startGame()
 	public void actionPerformed(ActionEvent e) {
-//		p.println("test");
-////		gamePanel.step();
+		if (e.getActionCommand() == "Exit game") {
+			p.println("Reached");
+			timer.stop();
+			System.exit(0);
+		}
+		// Catch action from GamePanel for player 1 victory, but AIApplciation doesn't need to do anything for it
+		else if (e.getActionCommand() == "Player 1 victory") { } 
+		else if (e.getActionCommand() == "Player 2 victory") { } 
+		else { // step() may blow up if unexpected action events fire since it's in an else, but all cases should be covered here
+			step();
+		}
 	}
 
-	// Initialize gamePanel components and start the game
+	// Initialize gamePanel components and start the game with the Timer!
 	private void startGame() {
-		int numCards = 10; // Num cards that AI plays with
+		int numCards = 2; // Total num cards that the AI and Computer play with
 		gamePanel.setNumCards(numCards);
 		gamePanel.setPlayerName(lblPlayerName.getText());
 		gamePanel.initializeDecksAndPlayers();
+		
+		// Start timer that calls step appropriately
+		timer = new Timer(1000, this); // ms, listener
+		timer.setInitialDelay(1900); // ms before first fire
+		timer.start();
 	}    
 
 	/* Instance fields */
 	private Printer p = new Printer();
 	private int maxX, maxY;
+	Timer timer;
 	
 	// Panels & Components
 	private JPanel ultimatePanel;

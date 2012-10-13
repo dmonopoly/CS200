@@ -43,9 +43,9 @@ public class GamePanel extends JPanel implements ActionListener{
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnExitGame) {
-        	resetGame();
         	// passes to Application to change menuState
         	listener.actionPerformed(new ActionEvent((Object) btnExitGame, ActionEvent.ACTION_PERFORMED, "Exit game"));
+            resetGame();
         }
     }
 
@@ -56,9 +56,9 @@ public class GamePanel extends JPanel implements ActionListener{
     // Called from outside this class to time initialization properly
     public void initializeDecksAndPlayers() {
         // Prepare decks for players
-        Deck deck1 = new Deck(numCards);
+        Deck deck1 = new Deck(numCards); // First initialize one deck with all the cards
         deck1.shuffle();
-        Deck deck2 = new Deck(deck1.split());
+        Deck deck2 = new Deck(deck1.split()); // Split deck 1 in half and give the other half to deck 2
 
         // Testing only
 //         testViaSeedingDecks(deck1, deck2);
@@ -107,6 +107,7 @@ public class GamePanel extends JPanel implements ActionListener{
     // private void testP2RunsOutInWar() {
     // }
     
+    // @param theNumberOfCards - should be an even number so you can /2 evenly
     public void setNumCards(int theNumberOfCards) {
         numCards = theNumberOfCards;
     }
@@ -114,6 +115,7 @@ public class GamePanel extends JPanel implements ActionListener{
     // KEY method: Continues the game, like drawing the next card
     // 2 states: show cards & clear cards
     public void step() {
+    	p.println(gameState);
     	switch(gameState) {
     	case SHOULD_PLAY_CARDS:
     		try {
@@ -162,6 +164,7 @@ public class GamePanel extends JPanel implements ActionListener{
     		break;
     	case SHOULD_EXIT_GAME:
     		// Manually fire "Exit game" event
+            p.println("About to exit");
     		btnExitGame.doClick();
     	} // end switch statement
     	updateArena(); // Updates the card shown in the arena based on active cards
@@ -194,7 +197,6 @@ public class GamePanel extends JPanel implements ActionListener{
     	} catch (Exception e) {
     		// The game should exit by the next click
     		p.println("AHHH: "+e.getStackTrace());
-//    		btnExitGame.doClick();
     	}
     	
     	// Update stats
@@ -243,17 +245,16 @@ public class GamePanel extends JPanel implements ActionListener{
     private GameState checkForDeadPlayer() {
     	boolean p1isOut = player1.cardCount() == 0;
         boolean p2isOut = player2.cardCount() == 0;
-        
         boolean lastTwoCardsInPlayAreFaceDown;
         if (!p1ActiveCards.isEmpty() && !p2ActiveCards.isEmpty())
         	lastTwoCardsInPlayAreFaceDown = !p1ActiveCards.get(p1ActiveCards.size()-1).getFaceUp() && !p2ActiveCards.get(p2ActiveCards.size()-1).getFaceUp();
         else
         	lastTwoCardsInPlayAreFaceDown = false;
         
-        if (p1isOut && p2isOut && lastTwoCardsInPlayAreFaceDown)
+        if (p1isOut && p2isOut && lastTwoCardsInPlayAreFaceDown) {
             // If they're both out of cards, and the last cards they played are face down, it's a draw
             return DRAW;
-        else if (p1isOut && p2isOut) {
+        } else if (p1isOut && p2isOut) { // Last two cards in play are face up
             // If they're both out of cards, but the last cards they played are face up, 
         	// compare the cards for a last-minute battle
             int p1Val = p1ActiveCards.get(p1ActiveCards.size()-1).getValue();
@@ -278,6 +279,7 @@ public class GamePanel extends JPanel implements ActionListener{
     // e.g., give cards to player1 if player1 won the war, but player2 still has cards
     // post: gameState = SHOULD_CLEAR_CARDS 
     private void endWar(GameState state) {
+    	p.println("Ending the war");
     	switch (state) {
     	case PLAYER_1_WAR_VICTORY:
    	        // p.println("p1 war victory");
@@ -308,7 +310,7 @@ public class GamePanel extends JPanel implements ActionListener{
     // Concludes the game
     // @params i: 0 -> draw, 1 -> player1 victory, 2 -> player2 victory 
     private void concludeGame(int i) {
-   	    // p.println("Game result: "+i);
+   	    p.println("Concluding the game: "+i);
     	String pre = "<html><b><span style='font-size: 20px'>Game Over: ";
     	switch(i) {
     	case 0:
@@ -441,7 +443,7 @@ public class GamePanel extends JPanel implements ActionListener{
     /** Instance fields */
     private Printer p = new Printer();
     private ActionListener listener;
-    private int numCards;
+    private int numCards; // the TOTAL num cards that both players play with
     private Player player1, player2; // you are player1, computer is player2
     private ArrayList<Card> p1ActiveCards;
     private ArrayList<Card> p2ActiveCards;
