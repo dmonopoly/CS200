@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.EOFException;
@@ -23,12 +24,20 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 /**
@@ -194,7 +203,39 @@ public class Application extends JFrame implements ActionListener {
             playerIndexPanel.add(existingPlayerPanels.get(i));
         }
         
+        // Deal with menu
+        prepareMenu();
+
         setContentPane(ultimatePanel);
+        setJMenuBar(menuBar);
+    }
+    
+    private void prepareMenu() {
+    	menuBar = new JMenuBar();
+
+        // First menu
+        menu = new JMenu("File");
+        menuBar.add(menu);
+
+        // "Help" Submenu
+        submenu = new JMenu("Help");
+
+        menuItemAbout = new JMenuItem("About");
+        menuItemAbout.addActionListener(this);
+        submenu.add(menuItemAbout);
+
+        menu.add(submenu);
+        
+        menu.addSeparator();
+
+        // Save and exit menu items
+        menuItemSave = new JMenuItem("Save player data");
+        menuItemSave.addActionListener(this);
+        menu.add(menuItemSave);
+
+        menuItemExit = new JMenuItem("Exit application (saves automatically)");
+        menuItemExit.addActionListener(this);
+        menu.add(menuItemExit);
     }
     
     // Returns the default player name upon start up
@@ -286,17 +327,6 @@ public class Application extends JFrame implements ActionListener {
         		
                 JOptionPane.showMessageDialog(this, "Player selected", "Notification", JOptionPane.PLAIN_MESSAGE);
         	} 
-        	// Unneeded; maybe use in future version
-//        	else if (e.getActionCommand().contains("Deleted player")) {
-//                // Delete a player
-//                String tmp = e.getActionCommand();
-//                String pName = tmp.substring(tmp.indexOf(":")+2);
-//                int pIndex = findPlayerIndex(pName);
-//
-//                existingPlayerPanels.remove(pIndex);
-//
-//                JOptionPane.showMessageDialog(this, "Player deleted", "Notification", JOptionPane.PLAIN_MESSAGE);
-//            }
         	break;
         case GAME_SETUP:
         	if (e.getSource() == btnStart) {
@@ -318,6 +348,18 @@ public class Application extends JFrame implements ActionListener {
         	} // need to guarantee changed menustate? I guess not. 
         	break;
         }
+        
+        if (e.getSource() == menuItemAbout) {
+    		aboutBox = new AboutBox(null);
+    		aboutBox.setLocationRelativeTo(this);
+    		aboutBox.setVisible(true);
+    	} else if (e.getSource() == menuItemSave) {
+    		writeData();
+    		JOptionPane.showMessageDialog(this, "Data saved", "Notification", JOptionPane.INFORMATION_MESSAGE);
+    	} else if (e.getSource() == menuItemExit) {
+    		writeData(); // automatically write data
+    		System.exit(0);
+    	}
     }
     
     // Returns the index of the player in existingPlayerPanels based on name
@@ -397,7 +439,14 @@ public class Application extends JFrame implements ActionListener {
     private static final String SAVE_FILE_NAME = "game.sav";
     private static final String NO_SELECTED_PLAYER = "None. Please create & select a player.";
 
-    // Panels & Components
+    // Menu stuff
+    private JMenuBar menuBar;
+    private JMenu menu, submenu;
+    private JMenuItem menuItemAbout, menuItemSave, menuItemExit;
+    
+    private AboutBox aboutBox;
+    
+    // Panels & Components    
     private JPanel ultimatePanel;
     private GamePanel gamePanel; // essential
     private CardLayout layout; // used with mainAreaPanel
