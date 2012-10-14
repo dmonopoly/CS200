@@ -10,8 +10,8 @@ public class Printer {
 
 	public Printer() {
 		// Adjust as appropriate when coding
-//		turnOn();
-		turnOff();
+		turnOn();
+//		turnOff();
 	}
 	
 	public void print(Object obj) {

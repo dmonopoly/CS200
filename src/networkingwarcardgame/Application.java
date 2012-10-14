@@ -10,24 +10,29 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -36,8 +41,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 /**
@@ -45,18 +48,34 @@ import javax.swing.SwingConstants;
  * @author David Zhang
  */
 
-public class Application extends JFrame implements ActionListener {
-    public Application() {
+public class Application extends JFrame implements ActionListener, Client {
+    public Application(int portNumber, String aHostName) {
+    	// Connection stuff
+    	portNum = portNumber;
+    	hostName = aHostName;
+    	connect();
+    	
         // Set frame dimensions
         maxX = 900;
         maxY = 750;
         setSize(maxX, maxY);
         
         // Set actions on exiting the entire application
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                writeData();
+            public void windowClosing(WindowEvent windowEvent) {
+            	p.println("Clean up right before closing");
+                writeData(); // save data
+                sendToServer(Message.CLIENT_EXITED); // notify server that a client has left
+                
+                // Close connection
+                try {
+                	out.close();
+                	in.close();
+                	socket.close();
+                } catch (Exception e) {
+                	p.println("Did not close connection");
+                }
             }
         });
 
@@ -247,7 +266,6 @@ public class Application extends JFrame implements ActionListener {
         }
     }
     
-    // TODO
     private void readData() {
     	try {
     		reader = new ObjectInputStream(new FileInputStream(SAVE_FILE_NAME));
@@ -285,7 +303,31 @@ public class Application extends JFrame implements ActionListener {
     }
     
     public static void main(String[] args) {
-        Application app = new Application(); // a JFrame
+    	// Get connection info
+    	// Port num
+    	int portNum = 31415;
+		Scanner in = new Scanner(System.in);
+		System.out.print("Enter port number (default: 31415): ");
+		try {
+			String nextLine = in.nextLine();
+			portNum = Integer.parseInt(nextLine);
+		} catch (Exception e) {
+			System.out.println("Using default port number");
+			portNum = 31415;
+		}
+		
+		// Host name
+		String hostName = "localhost";
+		System.out.print("Enter host name (default: localhost): ");
+		String nextLine = in.nextLine();
+		if (nextLine.equals("")) {
+			System.out.println("Using default host name");
+			hostName = "localhost";
+		} else {
+			hostName = nextLine;
+		}
+    	
+        Application app = new Application(portNum, hostName); // a JFrame
         
         app.setVisible(true);
         app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -357,8 +399,9 @@ public class Application extends JFrame implements ActionListener {
     		writeData();
     		JOptionPane.showMessageDialog(this, "Data saved", "Notification", JOptionPane.INFORMATION_MESSAGE);
     	} else if (e.getSource() == menuItemExit) {
-    		writeData(); // automatically write data
-    		System.exit(0);
+    		// Fire the closing event! Leads to windowClosing from WindowListener so it DOES save
+    		WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSING);
+    		Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(closingEvent);
     	}
     }
     
@@ -421,6 +464,59 @@ public class Application extends JFrame implements ActionListener {
         gamePanel.initializeDecksAndPlayers();
     }
     
+    // Client methods
+    @Override
+	public void connect() {
+//    	p.println("host name: "+hostName);
+//    	p.println("port num: "+portNum);
+    	
+		System.out.println("Connecting...");
+		socket = null;
+        out = null;
+        in = null;
+
+        try {
+            socket = new Socket(hostName, portNum);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host");
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Couldn't get I/O for the connection.");
+            System.exit(1);
+        }
+
+        System.out.println("Done connecting");
+	}
+    
+	@Override
+	public void sendToServer(String msg) {
+		try {
+			out.println(msg);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void listenToServer() {
+		try {
+			String msg = in.readLine();
+			processMessage(msg);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+
+	@Override
+	public void processMessage(String msg) {
+		// Decide action based on message from server
+		if (msg.equals(Message.TEST_CLIENT)) {
+			System.out.println("Client test passed.");
+		}		
+	}
+    
     /* Instance fields */
     private Printer p = new Printer();
     private int maxX, maxY;
@@ -438,6 +534,13 @@ public class Application extends JFrame implements ActionListener {
     private ObjectInputStream reader;
     private static final String SAVE_FILE_NAME = "game.sav";
     private static final String NO_SELECTED_PLAYER = "None. Please create & select a player.";
+
+    // Connection stuff
+    private String hostName;
+    private int portNum;
+    private PrintWriter out;
+    private BufferedReader in;
+    private Socket socket;
 
     // Menu stuff
     private JMenuBar menuBar;
@@ -474,5 +577,4 @@ public class Application extends JFrame implements ActionListener {
     private JPanel firstLabelsPanel;
     private JButton btnCreatePlayer;
     private JPanel playerTopPanel;
-    
 }

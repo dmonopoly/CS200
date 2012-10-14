@@ -21,7 +21,7 @@ public class Client extends JFrame implements ActionListener { // WindowListener
 	private static int PORT_NUMBER = 31415;
 	private PrintWriter out;
     private BufferedReader in;
-    private Socket socket; 
+    private Socket socket;
 	
 	private JLabel label;
 	private JButton btn;
